@@ -1,0 +1,324 @@
+-- FlightControlGUI.lua
+-- LocalScript — place inside StarterPlayerScripts
+
+local Players      = game:GetService("Players")
+local UIS          = game:GetService("UserInputService")
+local RS           = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+local player    = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- ── Layout constants ──────────────────────────────────────────────────────────
+local PANEL_W  = 327
+local PANEL_H  = 215
+local PAD      = 20
+local SLIDE_T  = TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+local TOGGLE_T = TweenInfo.new(0.20, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+
+-- ── ScreenGui ─────────────────────────────────────────────────────────────────
+local screenGui = Instance.new("ScreenGui", playerGui)
+screenGui.Name           = "FlightControlGui"
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.ResetOnSpawn   = false
+
+-- ── Main panel ────────────────────────────────────────────────────────────────
+local panel = Instance.new("Frame", screenGui)
+panel.Name             = "Panel"
+panel.BorderSizePixel  = 0
+panel.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+panel.Size             = UDim2.new(0, PANEL_W, 0, PANEL_H)
+panel.AnchorPoint      = Vector2.new(1, 1)
+panel.Position         = UDim2.new(1, -PAD, 1, -PAD)
+
+Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 15)
+local panelStroke = Instance.new("UIStroke", panel)
+panelStroke.Thickness = 1.5
+panelStroke.Color     = Color3.fromRGB(53, 53, 53)
+
+-- ── Flight Mode row ───────────────────────────────────────────────────────────
+local rowFlight = Instance.new("Frame", panel)
+rowFlight.BorderSizePixel  = 0
+rowFlight.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+rowFlight.Size             = UDim2.new(0, 303, 0, 59)
+rowFlight.Position         = UDim2.new(0.03587, 0, 0.06538, -2)
+Instance.new("UICorner", rowFlight).CornerRadius = UDim.new(0, 10)
+local s_rf = Instance.new("UIStroke", rowFlight)
+s_rf.Thickness = 1.5; s_rf.Color = Color3.fromRGB(53, 53, 53)
+
+local lblFlight = Instance.new("TextLabel", rowFlight)
+lblFlight.BorderSizePixel      = 0
+lblFlight.TextSize             = 20
+lblFlight.BackgroundTransparency = 1
+lblFlight.FontFace             = Font.new([[rbxasset://fonts/families/SourceSansPro.json]])
+lblFlight.TextColor3           = Color3.fromRGB(89, 89, 89)
+lblFlight.Size                 = UDim2.new(0, 158, 0, 58)
+lblFlight.Text                 = "FLIGHT MODE"
+
+local dot = Instance.new("Frame", rowFlight)
+dot.BorderSizePixel  = 0
+dot.BackgroundColor3 = Color3.fromRGB(72, 72, 72)
+dot.Size             = UDim2.new(0, 7, 0, 7)
+dot.Position         = UDim2.new(0.0396, 1, 0.40678, 2)
+Instance.new("UICorner", dot).CornerRadius = UDim.new(0, 10000)
+
+local track = Instance.new("Frame", rowFlight)
+track.BorderSizePixel  = 0
+track.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+track.Size             = UDim2.new(0, 59, 0, 26)
+track.Position         = UDim2.new(0.75248, 1, 0.23729, 2)
+Instance.new("UICorner", track).CornerRadius = UDim.new(0, 10000)
+local trackStroke = Instance.new("UIStroke", track)
+trackStroke.Thickness = 1.5; trackStroke.Color = Color3.fromRGB(53, 53, 53)
+
+local thumb = Instance.new("Frame", track)
+thumb.BorderSizePixel  = 0
+thumb.BackgroundColor3 = Color3.fromRGB(72, 72, 72)
+thumb.Size             = UDim2.new(0, 18, 0, 18)
+-- Gap of 4px from left edge (track=59px, thumb=18px, so ON pos = 59-18-4 = 37px from left)
+thumb.Position         = UDim2.new(0, 4, 0.5, -9)
+Instance.new("UICorner", thumb).CornerRadius = UDim.new(0, 10000)
+
+-- Invisible button over the track to capture clicks
+local toggleBtn = Instance.new("TextButton", track)
+toggleBtn.Size               = UDim2.new(1, 0, 1, 0)
+toggleBtn.BackgroundTransparency = 1
+toggleBtn.Text               = ""
+toggleBtn.ZIndex             = 5
+
+-- ── Speed row ─────────────────────────────────────────────────────────────────
+local rowSpeed = Instance.new("Frame", panel)
+rowSpeed.BorderSizePixel  = 0
+rowSpeed.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+rowSpeed.Size             = UDim2.new(0, 303, 0, 59)
+rowSpeed.Position         = UDim2.new(0.03587, 0, 0.3398, 12)
+Instance.new("UICorner", rowSpeed).CornerRadius = UDim.new(0, 10)
+local s_rs = Instance.new("UIStroke", rowSpeed)
+s_rs.Thickness = 1.5; s_rs.Color = Color3.fromRGB(53, 53, 53)
+
+local lblSpeed = Instance.new("TextLabel", rowSpeed)
+lblSpeed.BorderSizePixel      = 0
+lblSpeed.TextSize             = 20
+lblSpeed.BackgroundTransparency = 1
+lblSpeed.FontFace             = Font.new([[rbxasset://fonts/families/SourceSansPro.json]])
+lblSpeed.TextColor3           = Color3.fromRGB(89, 89, 89)
+lblSpeed.Size                 = UDim2.new(0, 115, 0, 58)
+lblSpeed.Text                 = "SPEED"
+
+local speedBox = Instance.new("TextBox", rowSpeed)
+speedBox.Name              = "SpeedBox"
+speedBox.PlaceholderColor3 = Color3.fromRGB(73, 73, 73)
+speedBox.BorderSizePixel   = 0
+speedBox.TextColor3        = Color3.fromRGB(73, 73, 73)
+speedBox.BackgroundColor3  = Color3.fromRGB(22, 22, 22)
+speedBox.PlaceholderText   = "100"
+speedBox.Size              = UDim2.new(0, 90, 0, 26)
+speedBox.Position          = UDim2.new(0.65017, 1, 0.23729, 2)
+speedBox.Text              = ""
+speedBox.ClearTextOnFocus  = false
+Instance.new("UICorner", speedBox).CornerRadius = UDim.new(0, 10000)
+local s_sb = Instance.new("UIStroke", speedBox)
+s_sb.Thickness = 1.5; s_sb.Color = Color3.fromRGB(53, 53, 53)
+s_sb.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+-- ── Apply button ──────────────────────────────────────────────────────────────
+local applyBtn = Instance.new("TextButton", panel)
+applyBtn.Name             = "ApplyBtn"
+applyBtn.BorderSizePixel  = 0
+applyBtn.TextSize         = 10
+applyBtn.TextColor3       = Color3.fromRGB(89, 89, 89)
+applyBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+applyBtn.Size             = UDim2.new(0, 303, 0, 43)
+applyBtn.Text             = "APPLY CHANGES"
+applyBtn.Position         = UDim2.new(0.03587, 0, 0.68864, 11)
+Instance.new("UICorner", applyBtn).CornerRadius = UDim.new(0, 10)
+local s_ab = Instance.new("UIStroke", applyBtn)
+s_ab.Thickness = 1.5; s_ab.Color = Color3.fromRGB(53, 53, 53)
+s_ab.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+-- ── Minimize button (lives in screenGui, NOT in panel so it doesn't slide) ───
+local minBtn = Instance.new("ImageButton", screenGui)
+minBtn.Name             = "MinimizeBtn"
+minBtn.BorderSizePixel  = 0
+minBtn.ScaleType        = Enum.ScaleType.Fit
+minBtn.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+minBtn.Image            = ""           -- no image on the button itself
+minBtn.Size             = UDim2.new(0, 62, 0, 29)
+minBtn.AnchorPoint      = Vector2.new(1, 1)
+-- Sit just above the panel (panel top = 1 offset -(PAD + PANEL_H), minus a 6 px gap)
+minBtn.Position         = UDim2.new(1, -PAD, 1, -(PAD + PANEL_H + 6))
+Instance.new("UICorner", minBtn).CornerRadius = UDim.new(0, 15)
+local s_mb = Instance.new("UIStroke", minBtn)
+s_mb.Thickness = 1.5; s_mb.Color = Color3.fromRGB(53, 53, 53)
+s_mb.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+-- Inner ImageLabel — only THIS rotates, not the button frame
+local minImg = Instance.new("ImageLabel", minBtn)
+minImg.Name               = "Arrow"
+minImg.Size               = UDim2.new(1, 0, 1, 0)
+minImg.BackgroundTransparency = 1
+minImg.ScaleType          = Enum.ScaleType.Fit
+minImg.Image              = "rbxassetid://116477484474404"
+minImg.ImageColor3        = Color3.fromRGB(72, 72, 72)
+minImg.AnchorPoint        = Vector2.new(0.5, 0.5)
+minImg.Position           = UDim2.new(0.5, 0, 0.5, 0)
+
+-- ── Minimize / restore positions ──────────────────────────────────────────────
+local panelShown  = UDim2.new(1, -PAD,            1, -PAD)
+local panelHidden = UDim2.new(1, PANEL_W + PAD,   1, -PAD)   -- slides fully off-screen to the right
+
+-- Button stays on right edge at all times; only Y shifts slightly when minimised
+local btnShown  = UDim2.new(1, -PAD, 1, -(PAD + PANEL_H + 6))
+
+local minimized = false
+
+minBtn.MouseButton1Click:Connect(function()
+	minimized = not minimized
+	if minimized then
+		TweenService:Create(panel,  SLIDE_T, { Position = panelHidden }):Play()
+		TweenService:Create(minImg, SLIDE_T, { Rotation = 180 }):Play()
+	else
+		TweenService:Create(panel,  SLIDE_T, { Position = panelShown }):Play()
+		TweenService:Create(minImg, SLIDE_T, { Rotation = 0 }):Play()
+	end
+end)
+
+-- ── Toggle visual ─────────────────────────────────────────────────────────────
+local COL_OFF = Color3.fromRGB(72,  72,  72)
+local COL_ON  = Color3.fromRGB(210, 210, 210)   -- brighter white when enabled
+
+local function setToggleVisual(on)
+	TweenService:Create(thumb, TOGGLE_T, {
+		-- OFF: 4px from left. ON: 59-18-4 = 37px from left. Both vertically centred.
+		Position         = on and UDim2.new(0, 37, 0.5, -9) or UDim2.new(0, 4, 0.5, -9),
+		BackgroundColor3 = on and COL_ON or COL_OFF,
+	}):Play()
+	TweenService:Create(dot, TOGGLE_T, {
+		BackgroundColor3 = on and COL_ON or COL_OFF,
+	}):Play()
+end
+
+-- ── Flight variables ──────────────────────────────────────────────────────────
+local flying        = false
+local canFly        = true
+local speed         = 100
+local acceleration  = 5
+local tiltSpeed     = 5
+local rotationSpeed = 4
+
+local vel          = Vector3.zero
+local currentTiltX = 0
+local currentTiltZ = 0
+
+local bv, bg, conn
+local hum, root
+
+local function getRoot()
+	local char = player.Character or player.CharacterAdded:Wait()
+	hum  = char:WaitForChild("Humanoid")
+	root = char:WaitForChild("HumanoidRootPart")
+	return root, hum
+end
+
+local function stopFlying()
+	flying = false
+	if bv   then bv:Destroy();     bv   = nil end
+	if bg   then bg:Destroy();     bg   = nil end
+	if conn then conn:Disconnect(); conn = nil end
+	if hum  then hum.PlatformStand = false end
+	vel = Vector3.zero
+	currentTiltX = 0; currentTiltZ = 0
+end
+
+local function startFlying()
+	local r, h = getRoot()
+	if not r or not h then return end
+	hum = h; root = r
+	hum.PlatformStand = true
+
+	bv = Instance.new("BodyVelocity")
+	bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+	bv.Velocity = Vector3.zero
+	bv.Parent   = root
+
+	bg = Instance.new("BodyGyro")
+	bg.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
+	bg.P         = 1e4
+	bg.CFrame    = root.CFrame
+	bg.Parent    = root
+
+	conn = RS.RenderStepped:Connect(function(dt)
+		if not flying then return end
+
+		local isTyping = UIS:GetFocusedTextBox() ~= nil
+		local cam      = workspace.CurrentCamera
+		local inputVec = Vector3.zero
+
+		if not isTyping then
+			if UIS:IsKeyDown(Enum.KeyCode.W) then inputVec += Vector3.new(0,  0, -1) end
+			if UIS:IsKeyDown(Enum.KeyCode.S) then inputVec += Vector3.new(0,  0,  1) end
+			if UIS:IsKeyDown(Enum.KeyCode.A) then inputVec += Vector3.new(-1, 0,  0) end
+			if UIS:IsKeyDown(Enum.KeyCode.D) then inputVec += Vector3.new(1,  0,  0) end
+			if UIS:IsKeyDown(Enum.KeyCode.E) then inputVec += Vector3.new(0,  1,  0) end
+			if UIS:IsKeyDown(Enum.KeyCode.Q) then inputVec += Vector3.new(0, -1,  0) end
+		end
+
+		local moveDir   = inputVec.Magnitude > 0 and cam.CFrame:VectorToWorldSpace(inputVec.Unit) or Vector3.zero
+		vel = vel:Lerp(moveDir * speed, acceleration * dt)
+		bv.Velocity = vel
+
+		local tX, tZ = 0, 0
+		if not isTyping then
+			if UIS:IsKeyDown(Enum.KeyCode.W) then tX = math.rad(-30) end
+			if UIS:IsKeyDown(Enum.KeyCode.S) then tX = math.rad(15)  end
+			if UIS:IsKeyDown(Enum.KeyCode.A) then tZ = math.rad(15)  end
+			if UIS:IsKeyDown(Enum.KeyCode.D) then tZ = math.rad(-15) end
+		end
+
+		currentTiltX += (tX - currentTiltX) * math.clamp(tiltSpeed * dt, 0, 1)
+		currentTiltZ += (tZ - currentTiltZ) * math.clamp(tiltSpeed * dt, 0, 1)
+
+		bg.CFrame = bg.CFrame:Lerp(
+			cam.CFrame * CFrame.Angles(currentTiltX, 0, currentTiltZ),
+			math.clamp(rotationSpeed * dt, 0, 1)
+		)
+	end)
+end
+
+-- ── GUI events ────────────────────────────────────────────────────────────────
+local flightOn = false
+
+toggleBtn.MouseButton1Click:Connect(function() --quad
+	if not canFly then return end
+	flightOn = not flightOn
+	setToggleVisual(flightOn)
+
+	if flightOn then
+		startFlying()
+		flying = true
+	else
+		stopFlying()
+	end
+end)
+
+applyBtn.MouseButton1Click:Connect(function()
+	local num = tonumber(speedBox.Text)
+	if num and num > 0 then speed = num end
+
+	local orig = applyBtn.TextColor3
+	applyBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+	applyBtn.Text       = "APPLIED"
+	task.delay(1, function()
+		applyBtn.Text       = "APPLY CHANGES"
+		applyBtn.TextColor3 = orig
+	end)
+end)
+
+player.CharacterAdded:Connect(function()
+	canFly = false
+	if flying then stopFlying() end
+	flightOn = false
+	setToggleVisual(false)
+	task.wait(1)
+	canFly = true
+end)
