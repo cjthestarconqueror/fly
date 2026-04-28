@@ -13,8 +13,8 @@ local playerGui = player:WaitForChild("PlayerGui")
 local PANEL_W  = 327
 local PANEL_H  = 215
 local PAD      = 20
-local SLIDE_T  = TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-local TOGGLE_T = TweenInfo.new(0.20, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+local SLIDE_T  = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local TOGGLE_T = TweenInfo.new(0.20, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
 -- ── ScreenGui ─────────────────────────────────────────────────────────────────
 local screenGui = Instance.new("ScreenGui", playerGui)
@@ -172,13 +172,18 @@ local btnShown  = UDim2.new(1, -PAD, 1, -(PAD + PANEL_H + 6))
 
 local minimized = false
 
+-- btnShown = above the panel; btnHidden = 20px from bottom-right (same PAD as panel)
+local btnHidden = UDim2.new(1, -PAD, 1, -PAD)
+
 minBtn.MouseButton1Click:Connect(function()
 	minimized = not minimized
 	if minimized then
 		TweenService:Create(panel,  SLIDE_T, { Position = panelHidden }):Play()
+		TweenService:Create(minBtn, SLIDE_T, { Position = btnHidden }):Play()
 		TweenService:Create(minImg, SLIDE_T, { Rotation = 180 }):Play()
 	else
 		TweenService:Create(panel,  SLIDE_T, { Position = panelShown }):Play()
+		TweenService:Create(minBtn, SLIDE_T, { Position = btnShown }):Play()
 		TweenService:Create(minImg, SLIDE_T, { Rotation = 0 }):Play()
 	end
 end)
@@ -288,7 +293,7 @@ end
 -- ── GUI events ────────────────────────────────────────────────────────────────
 local flightOn = false
 
-toggleBtn.MouseButton1Click:Connect(function() --quad
+toggleBtn.MouseButton1Click:Connect(function()
 	if not canFly then return end
 	flightOn = not flightOn
 	setToggleVisual(flightOn)
@@ -322,3 +327,4 @@ player.CharacterAdded:Connect(function()
 	task.wait(1)
 	canFly = true
 end)
+
